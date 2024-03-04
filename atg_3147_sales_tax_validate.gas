@@ -1,0 +1,52 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+' Sales tax validation
+' Originally for Elevating Boats
+' 9/20/2010
+' JSO
+' hook 35700
+
+Function.ODBC.Connection!con.OpenConnection(Variable.Ambient.PDSN,Variable.Ambient.PUser,Variable.Ambient.PPass,180)
+
+Function.Intrinsic.Control.CallSub(Validate)
+
+Program.Sub.Main.End
+
+Program.Sub.Validate.Start
+Variable.Local.sOrder.Declare(String)
+Variable.Local.sSuffix.Declare(String)
+Variable.Local.sSQL.Declare(String)
+Variable.Local.sTax1.Declare(String)
+Variable.Local.sTax2.Declare(String)
+Variable.Local.sMsg.Declare(String)
+
+V.Local.sOrder.Set(V.Passed.009001)
+V.Local.sSuffix.Set(V.Passed.009002)
+
+F.Intrinsic.String.Concat("SELECT TAX_1, TAX_2 FROM V_SHIPMENT_SHIPTO WHERE ORDER_NO = '",V.Local.sOrder,"' AND ORDER_SUFFIX = '",V.Local.sSuffix,"'",V.Local.sSQL)
+F.ODBC.connection!con.OpenRecordsetRO("rst1",V.local.sSql)
+F.intrinsic.Control.If(V.ODBC.con!rst1.EOF,<>,True)
+	V.local.sTax1.Set(V.ODBC.con!rst1.FieldVal!TAX_1)
+	V.Local.sTax2.Set(V.ODBC.con!rst1.FieldVal!TAX_2)
+	F.Intrinsic.Control.If(V.local.sTax1.trim,=,"")
+		F.Intrinsic.String.Concat("Tax 1 can not be blank, please update order ",V.local.sOrder,", sequence ",V.Local.sSuffix,".",V.Local.sMsg)
+		F.Intrinsic.UI.Msgbox(V.Local.sMsg)
+		V.Passed.cancel.Set(1)
+	F.Intrinsic.Control.ElseIf(V.Local.sTax2.Trim,=,"")
+		F.Intrinsic.String.Concat("Tax 2 can not be blank, please update order ",V.local.sOrder,", sequence ",V.Local.sSuffix,".",V.Local.sMsg)
+		F.Intrinsic.UI.Msgbox(V.Local.sMsg)
+		V.Passed.cancel.Set(1)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.ODBC.Connection!con.Close
+
+Program.Sub.Validate.End
+
+
